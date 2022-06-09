@@ -36,15 +36,16 @@ void cutil_list_iterator(struct cutil_list_t* list, struct cutil_list_iterator_t
 
 struct cutil_list_node_t* cutil_list_get(struct cutil_list_t* list, size_t pos);
 int cutil_list_insert(struct cutil_list_t* list, void* data, size_t pos);
+int cutil_list_insert_iterator(struct cutil_list_t* list, void* data, struct cutil_list_iterator_t* iterator)
 void* cutil_list_remove(struct cutil_list_t* list, size_t pos);
 void* cutil_list_remove_iterator(struct cutil_list_t* list, struct cutil_list_iterator_t* iterator);
 
 struct cutil_list_node_t* cutil_list_back(struct cutil_list_t* list);
-void cutil_list_insert_back(struct cutil_list_t* list, void* data);
+int cutil_list_insert_back(struct cutil_list_t* list, void* data);
 void* cutil_list_remove_back(struct cutil_list_t* list);
 
 struct cutil_list_node_t* cutil_list_front(struct cutil_list_t* list);
-void cutil_list_insert_front(struct cutil_list_t* list, void* data);
+int cutil_list_insert_front(struct cutil_list_t* list, void* data);
 void* cutil_list_remove_front(struct cutil_list_t* list);
 
 void cutil_list_iterator_init(struct cutil_list_iterator_t* iterator);
