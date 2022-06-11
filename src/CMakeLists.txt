@@ -1,5 +1,6 @@
 set(
   cutil_src
+    cutil.c
     map.c
     vector.c
     list.c
