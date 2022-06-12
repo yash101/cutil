@@ -4,6 +4,7 @@ set(
     map.c
     vector.c
     list.c
+    hash.c
 )
 
 add_library(

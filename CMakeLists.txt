@@ -26,5 +26,10 @@ add_subdirectory(docs)
 # build library
 add_subdirectory(src)
 
-# build tests
-add_subdirectory(test)
+if (BUILD_TESTS)
+  enable_language(CXX)
+  set(CXX_STANDARD_REQUIRED 11)
+  # build tests
+  include(CTest)
+  add_subdirectory(test)
+endif()
