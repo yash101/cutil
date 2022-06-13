@@ -25,4 +25,6 @@ macro(add_test TESTNAME)
   set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
 endmacro()
 
-add_test(cutil_test_list_0 test.list.0.cpp)
+add_test(cutil_test_list test.list.cpp)
+add_test(cutil_test_hmap test.hmap.cpp)
+add_test(cutil_test_hash test.hash.cpp)

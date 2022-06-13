@@ -11,6 +11,7 @@ project(
 # build configuration options
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_DOC "Build documentation" ON)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Output directories for outputs
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

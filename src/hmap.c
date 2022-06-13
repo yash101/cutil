@@ -22,11 +22,12 @@ void cutil_hmap_init(struct cutil_hmap_t* map)
     return;
 
   map->minBuckets = 16;
-  map->hashFn = cutil_hash_arb_xor_chained;
   map->size = 0;
   map->buckets = map->minBuckets;
   map->loadFactorMin = 0.50;
   map->loadFactorMax = 0.75;
+  map->hashFn = cutil_hash_arb_xor_chained;
+  map->compareFn = cutil_compare_lex;
   map->destuctor = NULL;
   map->mapData = malloc(sizeof(struct hmap_bucket) * map->buckets);
 
@@ -34,10 +35,12 @@ void cutil_hmap_init(struct cutil_hmap_t* map)
   {
     map->buckets = 0;
   }
+
+  struct hmap_bucket* buckets = map->mapData;
+  for (size_t i = 0; i < map->buckets; i++)
+    buckets[i].start = NULL;
 }
 
-/** /todo actually implement!
- */
 void cutil_hmap_destroy(struct cutil_hmap_t* map)
 {
   if (!map)
@@ -69,6 +72,7 @@ void cutil_hmap_destroy(struct cutil_hmap_t* map)
   map->loadFactorMin = 0.f;
   map->destuctor = NULL;
   map->mapData = NULL;
+  map->compareFn = NULL;
 }
 
 void cutil_hmap_set_destructor(struct cutil_hmap_t* map, cutil_destructor_func_t dest)
@@ -96,6 +100,11 @@ void cutil_hmap_set_min_buckets(struct cutil_hmap_t* map, size_t min)
 {
   if (map)
     map->minBuckets = min;
+}
+
+size_t cutil_hmap_size(struct cutil_hmap_t* map)
+{
+  return (map) ? map->size : 0;
 }
 
 int cutil_hmap_probe_hashfn(struct cutil_hmap_t* map, struct cutil_hmap_key_t key)
@@ -188,28 +197,24 @@ int cutil_hmap_insert(struct cutil_hmap_t* map, struct cutil_hmap_tuple_t t, int
     return 1;
   }
 
-  // find the bucket
-  struct hmap_bucket* bucket = &buckets[hash];
-  // check to see if the hash is there
-  struct hmap_node* tmp = bucket->start;
-  int comp = CUTIL_GT;
-  while (tmp && (comp = map->compareFn(tmp->key.key, t.key.key, tmp->key.len, t.key.len)) != CUTIL_EQ)
+  struct hmap_node* tmp = buckets[hash].start;
+  while (tmp)
+  {
+    if (map->compareFn(tmp->key.key, t.key.key, tmp->key.len, t.key.len) == CUTIL_EQ)
+      return 0;
     tmp = tmp->next;
-  
-  // check if the node already exists
-  if (tmp && comp == CUTIL_GT)
-    return 0;
-  
-  struct hmap_node* n = malloc(sizeof *n);
-  if (!n)
-    return 0;
-  
-  n->data = t.value;
-  n->key = t.key;
-  n->next = bucket->start;
-  bucket->start = n;
+  }
 
+  struct hmap_node* nNode = malloc(sizeof *nNode);
+  if (!nNode)
+    return 0;
+
+  nNode->data = t.value;
+  nNode->key = t.key;
+  nNode->next = buckets[hash].start;
+  buckets[hash].start = nNode;
   map->size++;
+
   return 1;
 }
 
@@ -276,8 +281,41 @@ int cutil_hmap_del(struct cutil_hmap_t* map, struct cutil_hmap_key_t key, int ch
     node = node->next;
   }
 
-  map->buckets -= (size_t) deleted;
+  map->size -= (size_t) deleted;
   return deleted;
+}
+
+struct cutil_hmap_iterator_t cutil_hmap_iterator_create(struct cutil_hmap_t* hmap)
+{
+  struct cutil_hmap_iterator_t it;
+  if (!hmap)
+    return it;
+  
+  it.hmap = hmap;
+  it.cur_bkt = 0;
+  it.cur_nd = NULL;
+}
+
+struct cutil_hmap_tuple_t* cutil_hmap_iterator_peek(struct cutil_hmap_iterator_t* iterator)
+{
+  // if (!iterator || !iterator->hmap)
+  //   return NULL;
+  
+  // struct hmap_bucket* buckets = (struct hmap_bucket*) iterator->hmap->mapData;
+
+  // // find the first node
+  // if (iterator->cur_nd == NULL && iterator->cur_bkt == 0)
+  // {
+  //   for (size_t i = iterator->cur_bkt; i < iterator->hmap->buckets; i++)
+  //   {
+  //     if (!buckets[i].start)
+  //       continue;
+  //   }
+  // }
+}
+
+struct cutil_hmap_tuple_t* cutil_hmap_iterator_next(struct cutil_hmap_iterator_t* iterator)
+{
 }
 
 struct cutil_hmap_key_t cutil_hmap_make_key(void* key, size_t len)
@@ -291,6 +329,9 @@ struct cutil_hmap_key_t cutil_hmap_make_key(void* key, size_t len)
 struct cutil_hmap_tuple_t cutil_hmap_make_tuple(struct cutil_hmap_key_t key, void* data)
 {
   struct cutil_hmap_tuple_t t;
-  t.key = key;
+  t.key.key = key.key;
+  t.key.len = key.len;
   t.value = data;
+
+  return t;
 }

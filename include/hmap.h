@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 
+#include "cutil.h"
 #include "hash.h"
 #include <stddef.h>
 
@@ -71,14 +72,14 @@ struct cutil_hmap_tuple_t cutil_hmap_make_tuple(struct cutil_hmap_key_t key, voi
  * 
  * @param key   /// Key object
  */
-#define cutil_hmap_key(key) cutil_hmap_make_key(key, sizeof *key);
+#define cutil_hmap_key(key) cutil_hmap_make_key(key, sizeof(*key))
 /**
  * @brief Make a tuple simply
  * 
  * @param key   /// Key of the tuple
  * @param value /// Value of the tuple
  */
-#define cutil_hmap_tuple(key, value) cutil_hmap_make_tuple(cutil_hmap_key(key), (void*) value);
+#define cutil_hmap_tuple(key, value) cutil_hmap_make_tuple(cutil_hmap_key(key), (void*) value)
 
 /**
  * @brief Constructor for the hmap object
@@ -145,6 +146,21 @@ void cutil_hmap_set_loadfactor(struct cutil_hmap_t* map, float min, float max);
  */
 void cutil_hmap_set_min_buckets(struct cutil_hmap_t* map, size_t min);
 
+/**
+ * @brief Get the number of elements in the hash map
+ * 
+ * @param map pointer to the hmap
+ * @return size_t number of tuples
+ */
+size_t cutil_hmap_size(struct cutil_hmap_t* map);
+
+/**
+ * @brief Check to see if the key exists in the hashmap
+ * 
+ * @param map pointer to the hmap
+ * @param key key to test
+ * @return int 
+ */
 int cutil_hmap_probe_key(struct cutil_hmap_t* map, struct cutil_hmap_key_t key);
 
 /**
@@ -157,10 +173,59 @@ int cutil_hmap_probe_key(struct cutil_hmap_t* map, struct cutil_hmap_key_t key);
  * @param key key
  * @return int boolean
  */
-int cutil_hmap_probe_hash(struct cutil_hmap_t* map, struct cutil_hmap_key_t key);
+int cutil_hmap_probe_hashfn(struct cutil_hmap_t* map, struct cutil_hmap_key_t key);
+
+/**
+ * @brief Insert into the hmap
+ * 
+ * If allowDuplicates is true (nonzero), insertion will take place even if the key already is in the hash map.
+ * 
+ * If allowDuplicates is false (zero), insertion will only take place if the key is unique.
+ * 
+ * Make a tuple using the cutil_hmap_make_tuple() function.
+ * 
+ * Returns the number of elements added (1 or 0)
+ * 
+ * @param map pointer to hmap
+ * @param insert tuple to insert
+ * @param allowDuplicates boolean to allow or disallow duplicate keys
+ * @return int 1 or 0
+ */
 int cutil_hmap_insert(struct cutil_hmap_t* map, struct cutil_hmap_tuple_t insert, int allowDuplicates);
+
+/**
+ * @brief Get value from map corresponding to the key
+ * 
+ * @param map pointer to hmap
+ * @param key key to search
+ * @return void** pointer to the value
+ */
 void** cutil_hmap_get(struct cutil_hmap_t* map, struct cutil_hmap_key_t key);
+
+/**
+ * @brief Remove tuple from the hashmap
+ * 
+ * If checkDuplicates is nonzero, all elements with the same key will be deleted.
+ * 
+ * GC will take place using the destructor function provided to map via cutil_hmap_set_destructor()
+ * 
+ * @param map pointer to hmap
+ * @param key key to delete
+ * @param checkDuplicates whether to quit after finding the first occurrence
+ * @return int number of tuples deleted
+ */
 int cutil_hmap_del(struct cutil_hmap_t* map, struct cutil_hmap_key_t key, int checkDuplicates);
+
+typedef struct cutil_hmap_iterator_t
+{
+  struct cutil_hmap_t* hmap;
+  size_t cur_bkt;
+  void* cur_nd;
+} cutil_hmap_iterator_t;
+
+struct cutil_hmap_iterator_t cutil_hmap_iterator_create(struct cutil_hmap_t* hmap);
+struct cutil_hmap_tuple_t* cutil_hmap_iterator_peek(struct cutil_hmap_iterator_t* iterator);
+struct cutil_hmap_tuple_t* cutil_hmap_iterator_next(struct cutil_hmap_iterator_t* iterator);
 
 #ifdef __cplusplus
 }
