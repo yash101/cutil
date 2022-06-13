@@ -124,25 +124,27 @@ int cutil_list_insert(struct cutil_list_t* list, void* data, ptrdiff_t pos)
     ptrdiff_t ctr = 0;
     while (++ctr < abs && it)
       it = it->prev;
-    
-    add->prev = it->prev;
-    add->next = it;
-    it->prev = add;
-    add->prev->next = add;
-    list->length++;
+
+    add->next = it->next;
+    it->next = add;
+    add->prev = it;
+    add->next->prev = add;
   }
   else
   {
     struct cutil_list_node_t* it = list->root;
     ptrdiff_t ctr = 0;
-    while (ctr++ < abs + 1 && it)
+
+    // iterate to position before add location
+    while (++ctr < abs && it)
       it = it->next;
     
-    add->prev = it->prev;
     add->next = it->next;
     it->next = add;
+    add->prev = it;
     add->next->prev = add;
   }
+  list->length++;
 
   return 1;
 }

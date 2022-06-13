@@ -74,6 +74,7 @@ TEST(list, insert_test_0)
   {
     EXPECT_TRUE(tmp->data != NULL);
     EXPECT_EQ(*(int*) tmp->data, arr2[(sizeof(arr2) / sizeof(*arr2)) - idx++ - 1]);
+    std::cout << *(int*) tmp->data << std::endl;
     tmp = tmp->next;
   }
 

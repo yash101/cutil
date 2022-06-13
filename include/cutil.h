@@ -10,4 +10,6 @@ extern const int CUTIL_LT;
 extern const int CUTIL_EQ;
 extern const int CUTIL_GT;
 
+typedef void (*cutil_destructor_func_t)(void* data);
+
 #endif

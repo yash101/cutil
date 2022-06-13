@@ -5,6 +5,7 @@ set(
     vector.c
     list.c
     hash.c
+    hmap.c
 )
 
 add_library(
