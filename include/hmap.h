@@ -55,13 +55,7 @@ typedef struct cutil_hmap_tuple_t
  * @param len length of the data to use as a hash map key
  * @return struct cutil_hmap_key_t key
  */
-inline struct cutil_hmap_key_t cutil_hmap_make_key(void* key, size_t len)
-{
-  struct cutil_hmap_key_t k;
-  k.key = key;
-  k.len = len;
-  return k;
-}
+struct cutil_hmap_key_t cutil_hmap_make_key(void* key, size_t len);
 
 /**
  * @brief Creates a cutil tuple with a key and its value
@@ -70,12 +64,7 @@ inline struct cutil_hmap_key_t cutil_hmap_make_key(void* key, size_t len)
  * @param data  /// Value of the item
  * @return struct cutil_hmap_tuple_t Tuple to use
  */
-inline struct cutil_hmap_tuple_t cutil_hmap_make_tuple(struct cutil_hmap_key_t key, void* data)
-{
-  struct cutil_hmap_tuple_t t;
-  t.key = key;
-  t.value = data;
-}
+struct cutil_hmap_tuple_t cutil_hmap_make_tuple(struct cutil_hmap_key_t key, void* data);
 
 /**
  * @brief Make a key simply

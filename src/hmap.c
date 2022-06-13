@@ -58,7 +58,7 @@ void cutil_hmap_destroy(struct cutil_hmap_t* map)
       free(tmp);
     }
   }
-  
+
   free(buckets);
 
   map->minBuckets = 0;
@@ -278,4 +278,19 @@ int cutil_hmap_del(struct cutil_hmap_t* map, struct cutil_hmap_key_t key, int ch
 
   map->buckets -= (size_t) deleted;
   return deleted;
+}
+
+struct cutil_hmap_key_t cutil_hmap_make_key(void* key, size_t len)
+{
+  struct cutil_hmap_key_t k;
+  k.key = key;
+  k.len = len;
+  return k;
+}
+
+struct cutil_hmap_tuple_t cutil_hmap_make_tuple(struct cutil_hmap_key_t key, void* data)
+{
+  struct cutil_hmap_tuple_t t;
+  t.key = key;
+  t.value = data;
 }
