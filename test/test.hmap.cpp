@@ -121,6 +121,7 @@ TEST(hmap, resize_buckets)
 
   EXPECT_EQ(map.buckets, map.minBuckets);
 
+  size_t lastBuckets = 0;
   // insert a ton of data
   for (size_t i = 0; i < 1024; i++)
   {
@@ -128,5 +129,16 @@ TEST(hmap, resize_buckets)
     *k = i;
 
     EXPECT_EQ(1, cutil_hmap_insert(&map, cutil_hmap_tuple(k, NULL)));
+    EXPECT_EQ(i + 1, cutil_hmap_size(&map));
+    size_t lf_fixp = (map.size * 1000) / (map.buckets + 1);
+    float lf = lf_fixp / 1000.f;
+    EXPECT_GE(map.buckets, map.minBuckets);
+    if (map.buckets > lastBuckets)
+    {
+      printf("%ld -> %ld @ %ld\n", lastBuckets, map.buckets, i);
+      lastBuckets = map.buckets;
+    }
+    // if (map.buckets != map.minBuckets)
+    //   EXPECT_LT(lf, map.loadFactorMax);
   }
 }

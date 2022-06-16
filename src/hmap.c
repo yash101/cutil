@@ -22,15 +22,13 @@ static int cutil_hmap_rebucket(struct cutil_hmap_t* map)
   // invalid action
   if (!map)
     return 0;
-  
-  size_t lf_fixp = (map->size * 1000) / (map->buckets + 1);
-  float lf = lf_fixp / 1000.f;
-  float tlf = (map->loadFactorMax + map->loadFactorMin) / 2;
-  // if the load factor is too low, let's shrink to free some space
-  // if the load factor is too high, let's grow to increase the efficiency of the hash map
-  size_t target_buckets = tlf * map->size;
-  if (lf > map->loadFactorMin && lf < map->loadFactorMax)
-    return 1;
+
+  size_t target_buckets = map->buckets;
+  float lf = (float) map->size / (float) (map->buckets + 1);
+  if (lf > map->loadFactorMax)
+    target_buckets = map->size * map->loadFactorMax;
+  if (lf < map->loadFactorMin)
+    target_buckets = map->size * map->loadFactorMin;
   
   if (target_buckets < map->minBuckets)
     target_buckets = map->minBuckets;
@@ -71,6 +69,7 @@ static int cutil_hmap_rebucket(struct cutil_hmap_t* map)
   }
 
   free(current);
+//  printf("Rebucket: %ld -> %ld\n", buckets_start, map->buckets);
 
   return 1;
 }
