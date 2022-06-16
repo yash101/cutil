@@ -26,9 +26,12 @@ TEST(compare_lex, lt)
   const char* a = "abcdefg";
   const char* b = "bcdef";
   const char* c = "abcd";
+  const char* d = "test1";
+  const char* e = "test2";
 
   EXPECT_EQ(cutil_compare_lex((void*) a, (void*) b, strlen(a), strlen(b)), CUTIL_LT);
   EXPECT_EQ(cutil_compare_lex((void*) c, (void*) a, strlen(a), strlen(b)), CUTIL_LT);
+  EXPECT_EQ(cutil_compare_lex((void*) d, (void*) e, strlen(d) + 1, strlen(e) + 1), CUTIL_LT);
 }
 
 TEST(compare_lex, gt)

@@ -34,9 +34,9 @@ TEST(hmap_other, make_tuple)
 
 TEST(hmap, null_oops)
 {
-  EXPECT_EQ(cutil_hmap_insert(NULL, cutil_hmap_tuple_t(), 0), 0);
+  EXPECT_EQ(cutil_hmap_insert(NULL, cutil_hmap_tuple_t()), 0);
   EXPECT_TRUE(cutil_hmap_get(NULL, cutil_hmap_key_t()) == NULL);
-  EXPECT_EQ(cutil_hmap_del(NULL, cutil_hmap_key_t(), 0), 0);
+  EXPECT_EQ(cutil_hmap_del(NULL, cutil_hmap_key_t()), 0);
 }
 
 TEST(hmap, basic0)
@@ -48,90 +48,85 @@ TEST(hmap, basic0)
   EXPECT_TRUE(map.mapData != NULL);
   EXPECT_EQ(map.size, 0);
 
-  int k0 = 0;
-  const char* str = "test0";
+  const char* keys[] = {
+    "test0",
+    "test1",
+    "test2"
+  };
 
-  EXPECT_EQ(1,
-    cutil_hmap_insert(
-      &map,
-      cutil_hmap_make_tuple(
-        cutil_hmap_make_key(&k0, sizeof(k0)),
-        (void*) str
-      ),
-      0
-    )
-  );
-  EXPECT_EQ(1, cutil_hmap_size(&map));
+  const char* vals[] = {
+    "val0",
+    "val1",
+    "val2"
+  };
 
-  EXPECT_EQ(0,
-    cutil_hmap_insert(
-      &map,
-      cutil_hmap_make_tuple(
-        cutil_hmap_make_key(&k0, sizeof(k0)),
-        (void*) str
-      ),
-      0
-    )
-  );
-  EXPECT_EQ(1, cutil_hmap_size(&map));
+  size_t n = sizeof(keys) / sizeof(*keys);
+  // insert all
+  for (size_t i = 0; i < n; i++)
+  {
+    struct cutil_hmap_key_t k = cutil_hmap_make_key((void*) keys[i], strlen(keys[i]) + 1);
+    struct cutil_hmap_tuple_t ins = cutil_hmap_make_tuple(k, (void*) vals[i]);
+    EXPECT_EQ(1, cutil_hmap_insert(&map, ins));
+    EXPECT_EQ(i + 1, cutil_hmap_size(&map));
+  }
 
-  const char* str2 = "test1";
-  EXPECT_EQ(1,
-    cutil_hmap_insert(
-      &map,
-      cutil_hmap_make_tuple(
-        cutil_hmap_make_key(&k0, sizeof(k0)),
-        (void*) str2
-      ),
-      1
-    )
-  );
-  EXPECT_EQ(2, cutil_hmap_size(&map));
+  // delete all
+  for (size_t i = 0; i < n; i++)
+  {
+    struct cutil_hmap_key_t k = cutil_hmap_make_key((void*) keys[i], strlen(keys[i]) + 1);
+    EXPECT_EQ(1, cutil_hmap_del(&map, k));
+    EXPECT_EQ(n - i - 1, cutil_hmap_size(&map));
+  }
 
-  const char* x = *(const char**) cutil_hmap_get(&map, cutil_hmap_key(&k0));
-  EXPECT_TRUE(x == str2 || x == str);
+  // insert twice
+  for (size_t i = 0; i < n; i++)
+  {
+    struct cutil_hmap_key_t k = cutil_hmap_make_key((void*) keys[i], strlen(keys[i]) + 1);
+    struct cutil_hmap_tuple_t ins = cutil_hmap_make_tuple(k, (void*) vals[i]);
+    EXPECT_EQ(1, cutil_hmap_insert(&map, ins));
+    EXPECT_EQ(i + 1, cutil_hmap_size(&map));
+  }
 
-  EXPECT_EQ(cutil_hmap_del(&map, cutil_hmap_make_key(&k0, sizeof(k0)), 1), 2);
-  EXPECT_EQ(cutil_hmap_size(&map), 0);
-  EXPECT_EQ(0, cutil_hmap_del(&map, cutil_hmap_make_key(&k0, sizeof k0), 0));
+  for (size_t i = 0; i < n; i++)
+  {
+    struct cutil_hmap_key_t k = cutil_hmap_make_key((void*) keys[i], strlen(keys[i]) + 1);
+    struct cutil_hmap_tuple_t ins = cutil_hmap_make_tuple(k, (void*) vals[i]);
+    EXPECT_EQ(0, cutil_hmap_insert(&map, ins));
+    EXPECT_EQ(n, cutil_hmap_size(&map));
+  }
 
-  int k1 = 69;
-  EXPECT_EQ(0, cutil_hmap_del(&map, cutil_hmap_make_key(&k1, sizeof k0), 0));
+  cutil_hmap_destroy(&map);
+}
 
-  EXPECT_EQ(1,
-    cutil_hmap_insert(
-      &map,
-      cutil_hmap_make_tuple(
-        cutil_hmap_make_key(&k0, sizeof(k0)),
-        (void*) str
-      ),
-      0
-    )
-  );
-  EXPECT_EQ(1, cutil_hmap_size(&map));
+static void destructor(struct cutil_hmap_tuple_t* t)
+{
+  if (t->key.key)
+    free(t->key.key);
+  if (t->value)
+    free(t->value);
+}
 
-  EXPECT_EQ(1,
-    cutil_hmap_insert(
-      &map,
-      cutil_hmap_make_tuple(
-        cutil_hmap_make_key(&k0, sizeof(k0)),
-        (void*) str
-      ),
-      1
-    )
-  );
-  EXPECT_EQ(2, cutil_hmap_size(&map));
+// hash fn for size_t
+static size_t hashfn(void* data, size_t len)
+{
+  return *(size_t*) data;
+}
 
-  EXPECT_EQ(1,
-    cutil_hmap_insert(
-      &map,
-      cutil_hmap_make_tuple(
-        cutil_hmap_make_key(&k0, sizeof(k0)),
-        (void*) str2
-      ),
-      1
-    )
-  );
-  EXPECT_EQ(3, cutil_hmap_size(&map));
-  EXPECT_EQ(1, cutil_hmap_del(&map, cutil_hmap_make_key(&k0, sizeof k0), 0));
+TEST(hmap, resize_buckets)
+{
+  struct cutil_hmap_t map;
+  cutil_hmap_init(&map);
+  cutil_hmap_set_destructor(&map, (cutil_destructor_func_t) destructor);
+  cutil_hmap_set_hashfn(&map, hashfn);
+
+  EXPECT_EQ(map.buckets, map.minBuckets);
+
+  // insert a ton of data
+  for (size_t i = 0; i < 1024; i++)
+  {
+    size_t* k = new size_t;
+    *k = i;
+
+    EXPECT_EQ(1, cutil_hmap_insert(&map, cutil_hmap_tuple(k, NULL)));
+  }
 }

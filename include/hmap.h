@@ -72,7 +72,7 @@ struct cutil_hmap_tuple_t cutil_hmap_make_tuple(struct cutil_hmap_key_t key, voi
  * 
  * @param key   /// Key object
  */
-#define cutil_hmap_key(key) cutil_hmap_make_key(key, sizeof(*key))
+#define cutil_hmap_key(key) cutil_hmap_make_key((void*) key, sizeof(*key))
 /**
  * @brief Make a tuple simply
  * 
@@ -178,20 +178,15 @@ int cutil_hmap_probe_hashfn(struct cutil_hmap_t* map, struct cutil_hmap_key_t ke
 /**
  * @brief Insert into the hmap
  * 
- * If allowDuplicates is true (nonzero), insertion will take place even if the key already is in the hash map.
- * 
- * If allowDuplicates is false (zero), insertion will only take place if the key is unique.
- * 
  * Make a tuple using the cutil_hmap_make_tuple() function.
  * 
  * Returns the number of elements added (1 or 0)
  * 
  * @param map pointer to hmap
  * @param insert tuple to insert
- * @param allowDuplicates boolean to allow or disallow duplicate keys
  * @return int 1 or 0
  */
-int cutil_hmap_insert(struct cutil_hmap_t* map, struct cutil_hmap_tuple_t insert, int allowDuplicates);
+int cutil_hmap_insert(struct cutil_hmap_t* map, struct cutil_hmap_tuple_t insert);
 
 /**
  * @brief Get value from map corresponding to the key
@@ -205,16 +200,13 @@ void** cutil_hmap_get(struct cutil_hmap_t* map, struct cutil_hmap_key_t key);
 /**
  * @brief Remove tuple from the hashmap
  * 
- * If checkDuplicates is nonzero, all elements with the same key will be deleted.
- * 
  * GC will take place using the destructor function provided to map via cutil_hmap_set_destructor()
  * 
  * @param map pointer to hmap
  * @param key key to delete
- * @param checkDuplicates whether to quit after finding the first occurrence
  * @return int number of tuples deleted
  */
-int cutil_hmap_del(struct cutil_hmap_t* map, struct cutil_hmap_key_t key, int checkDuplicates);
+int cutil_hmap_del(struct cutil_hmap_t* map, struct cutil_hmap_key_t key);
 
 typedef struct cutil_hmap_iterator_t
 {
